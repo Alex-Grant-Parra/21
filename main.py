@@ -77,22 +77,45 @@ class cards:
         category = list(trump.keys()).pop()
         card = trump[category]
         
+        def destroy():
+            if target is not None and target.activeTrumps:
+                removed = target.activeTrumps.pop()  # Remove last active trump
+                category = list(removed.keys())[0]
+                card = removed[category]
+
+
+
+
+                if list(removed.keys())[0] == "Go for":
+                    pass # Make it look at the last go for in the active trumps
+                if category == "Bet":  # If it's a bet-related trump
+                    Game.currentBet -= int(card)
+                elif list(removed.values())[0] == "bless":
+                    pass # Nothing needs to happen, as bless is only counted when a person is knocked out.
+
         if category == "Draw": self.drawCard(card)
 
         elif category == "Go for": Game.currentGoal = int(card)
 
-        elif category == "Bet":
-            Game.currentBet =+ int(card)
-            if Game.currentBet > 0:
-                Game.currentBet = 0
+        elif category == "Bet": # Add bloodshed
+            if card == "bloodshed":
+                self.drawTrump()
+                Game.currentBet += 1
+            else:
+                Game.currentBet = Game.currentBet + int(card)
+                if Game.currentBet < 0:
+                    Game.hiddenBet = Game.currentBet
+                    Game.currentBet = 0
 
         elif category == "Token":
 
             if card == "bless":
                 pass
             if card == "destroy":
-                if target is not None and target.activeTrumps:
-                    target.activeTrumps.pop()
+                destroy()
+
+
+
             if card == "friendship":
                 for p in Game.player:
                     p.drawTrump()
@@ -171,8 +194,11 @@ class Game:
     
     currentBet = 1
     currentGoal = 21
+    hiddenBet = currentBet
     player = []
 
+    def setBet(bet):
+        Game.currentBet, Game.hiddenBet = bet, bet
 def gameloop(Players):
 
     # Check the game has the correct number of players
@@ -184,15 +210,16 @@ def gameloop(Players):
     # Startup assignment
     g = Game()
     Game.player = [cards() for _ in range(Players)]
+    Game.currentBet = 5
 
-    # player[0].playTrump(player[0].trumps[0])
-    print(Game.player[0].deck)
-    print(Game.player[1].deck)
-    print(Game.player[0].getPlayerTotal())
-    Game.player[0].playTrump({'Deck': 'perfectDraw'})
-    print(Game.player[0].getPlayerTotal())
-    print(Game.player[0].deck)
-    print(Game.player[1].deck)
+    Game.setBet(5)
+    print(Game.currentBet)
+    Game.player[0].playTrump({"Bet" : "-2"})
+    Game.player[0].playTrump({"Bet" : "-1"})
+    print(Game.currentBet)
+    Game.player[1].playTrump({"Token" : "destroy"}, Game.player[0])
+    print(Game.currentBet)
+
 
 
 
