@@ -1,8 +1,12 @@
 from random import randint, choice
+from ast import literal_eval
 
-class cards:
+class Cards:
 
-    #  Avaliable number cards
+    def __repr__(self):
+        return f"Deck: {self.deck}, Trumps: {self.trumps}, ActiveTrumps: {self.activeTrumps}"
+
+    #  Avaliable number Cards
     SPECIALCARDS = {
         "J" : "11",
         # "Q" : 12,
@@ -12,7 +16,7 @@ class cards:
     ALLCARDS = [str(num) for num in range (2, 11)] + list(SPECIALCARDS)
     avaliableCards = ALLCARDS.copy()
 
-    # Avaliable trump cards
+    # Avaliable trump Cards
     ALLTRUMPS = {
         "Draw" : [str(num) for num in range (2, 8)],
         "Go for" : ["17", "24", "27"],
@@ -21,26 +25,26 @@ class cards:
         "Deck" : ["hush", "perfectDraw", "refresh", "remove", "return", "exchange", "disservice"]
     }
 
-    # Gets a random card from the avaliable, and returns it, then removes from avaliable cards
+    # Gets a random card from the avaliable, and returns it, then removes from avaliable Cards
     @staticmethod
     def randomCard():
-        if not cards.avaliableCards: raise ValueError("No more cards available!")
-        else: return cards.avaliableCards.pop(randint(0, len(cards.avaliableCards) - 1))
+        if not Cards.avaliableCards: raise ValueError("No more cards available!")
+        else: return Cards.avaliableCards.pop(randint(0, len(Cards.avaliableCards) - 1))
 
     # Gets a random trump and returns it
     @staticmethod 
     def randomTrump():
-        category = choice(list(cards.ALLTRUMPS.keys()))
-        card = choice(cards.ALLTRUMPS[category])
+        category = choice(list(Cards.ALLTRUMPS.keys()))
+        card = choice(Cards.ALLTRUMPS[category])
         return {category : card}
     
     def drawCard(self, Hidden=False, card=None):
         if card is None:
-            new_card = cards.randomCard()
+            new_card = Cards.randomCard()
         else:
-            if card in cards.avaliableCards:
+            if card in Cards.avaliableCards:
                 new_card = card
-                cards.avaliableCards.remove(str(card))
+                Cards.avaliableCards.remove(str(card))
             else:
                 return None
 
@@ -51,44 +55,42 @@ class cards:
         while len(self.hiddenOrder) > len(self.deck):
             self.hiddenOrder.pop()
 
-
-
     def drawTrump(self):
-        self.trumps.append(cards.randomTrump())
+        self.trumps.append(Cards.randomTrump())
 
     def getTotalPlayerTotal(self):
         intDeck = []
         for card in self.deck:
-            if card not in cards.SPECIALCARDS:
+            if card not in Cards.SPECIALCARDS:
                 intDeck.append(int(card))
             else:
-                if card in cards.SPECIALCARDS:
-                    intDeck.append(int(cards.SPECIALCARDS[card]))
+                if card in Cards.SPECIALCARDS:
+                    intDeck.append(int(Cards.SPECIALCARDS[card]))
 
 
         return sum(intDeck)
 
-    def getVisiblePlayerTotal(player):
+    def getVisiblePlayerTotal(self):
         intDeck = []
-        for card in player.deck:
-            if card not in cards.SPECIALCARDS:
+        for card in self.deck:
+            if card not in Cards.SPECIALCARDS:
                 intDeck.append(int(card))
             else:
-                if card in cards.SPECIALCARDS:
-                    intDeck.append(int(cards.SPECIALCARDS[card]))
+                if card in Cards.SPECIALCARDS:
+                    intDeck.append(int(Cards.SPECIALCARDS[card]))
         
-        hiddenOrder = player.hiddenOrder
+        hiddenOrder = self.hiddenOrder
 
         return sum(card for card, hidden in zip(intDeck, hiddenOrder) if not hidden)
 
     def playTrump(self, voidTrump, target = None):
 
         # Converts to dictionary if not already
-        if str(type(voidTrump)) != "<class 'dict'>": trump = eval(voidTrump)
+        if str(type(voidTrump)) != "<class 'dict'>": trump = literal_eval()(voidTrump)
         else: trump = voidTrump
 
         # Checks if the trump card is really in the player's hand
-        ensureTrumpInHand = False # Debug only
+        ensureTrumpInHand = True # Debug only
         if ensureTrumpInHand:
             if trump not in self.trumps:
                 raise ValueError(f"{trump} is not in the player's hand, but was attempted to be played.")
@@ -117,9 +119,11 @@ class cards:
                 elif list(removed.values())[0] == "bless":
                     pass # Nothing needs to happen, as bless is only counted when a person is knocked out.
 
-        if category == "Draw": self.drawCard(card = card)
+        if category == "Draw": 
+            self.drawCard(card = card)
 
-        elif category == "Go for": Game.currentGoal = int(card)
+        elif category == "Go for": 
+            Game.currentGoal = int(card)
 
         elif category == "Bet":
 
@@ -158,11 +162,11 @@ class cards:
                 current = self.getPlayerTotal()
                 difference = ideal - current
 
-                avaliableCards = [cards.SPECIALCARDS[card] if card in cards.SPECIALCARDS else card for card in cards.avaliableCards]
+                avaliableCards = [Cards.SPECIALCARDS[card] if card in Cards.SPECIALCARDS else card for card in Cards.avaliableCards]
                 validCards = [int(card) for card in avaliableCards if int(card) <= difference]
                 highestCard = str(max(validCards, default=None))
                 
-                reversedCards = {str(value): key for key, value in cards.SPECIALCARDS.items()}
+                reversedCards = {str(value): key for key, value in Cards.SPECIALCARDS.items()}
                 cardToAdd = reversedCards.get(highestCard, highestCard)
                 
                 self.drawCard(cardToAdd)
@@ -170,19 +174,19 @@ class cards:
             elif card == "refresh":
                 for c in range(0, len(self.deck)):
                     toReturn = self.deck.pop()
-                    cards.avaliableCards.append(toReturn)
+                    Cards.avaliableCards.append(toReturn)
                 self.drawCard()
                 self.drawCard() 
                 
             elif card == "remove":
                 if len(target.deck) > 1:
                     toReturn = target.deck.pop()
-                    cards.avaliableCards.append(toReturn)
+                    Cards.avaliableCards.append(toReturn)
 
             elif card == "return":
                 if len(self.deck) > 1:
                     toReturn = self.deck.pop()
-                    cards.avaliableCards.append(toReturn)
+                    Cards.avaliableCards.append(toReturn)
 
             elif card == "exchange":
                 player1Card, player2Card = self.deck.pop(), target.deck.pop()
@@ -192,23 +196,18 @@ class cards:
             elif card == "disservice":
                 target.drawCard()
 
-        
-        
 
-        if category in ["Go for", "Bet"] or card == "bless":
-            self.activeTrumps.append(trump)
+        if category in ["Go for", "Bet"] or card == "bless": self.activeTrumps.append(trump)
 
-        if ensureTrumpInHand:
-            self.trumps.remove(trump) 
+        if ensureTrumpInHand: self.trumps.remove(trump) 
 
-    def getPlayerDeck(player):
+    def getPlayerDeck(self):
         # Hides the areas that are suppost to be hidden before showing
         HIDDENIDENTIFIER = "XXX"
 
-        deck = player.deck
-        hiddenOrder = player.hiddenOrder
+        deck = self.deck
+        hiddenOrder = self.hiddenOrder
         return [HIDDENIDENTIFIER if hidden else card for card, hidden in zip(deck, hiddenOrder)]
-
 
     def __init__(self):
         self.deck, self.trumps, self.activeTrumps = [], [], []
@@ -232,19 +231,10 @@ def gameloop(Players):
 
     if Players < 2: raise ValueError("Too few players to start the game! (2 <= Players <= 13)")
     elif Players > 13: raise ValueError("Too many players to start the game! (2 <= Players <= 13)")
-        
     
     # Startup assignment
-    g = Game()
-    Game.player = [cards() for _ in range(Players)]
+    Game.player = [Cards() for _ in range(Players)]
 
-
-    Game.player[0].playTrump({"Deck" : "hush"})
-    Game.player[0].drawCard()
-    print(cards.getPlayerDeck(Game.player[0]))
-    print(Game.player[0].hiddenOrder)
-    print(cards.getVisiblePlayerTotal(Game.player[0]))
-    
 
 
 
