@@ -3,9 +3,13 @@ from random import randint, choice
 class cards:
 
     #  Avaliable number cards
-    SPECIALCARDS = ["J", "Q", "K", "A"] # Full card deck for testing
-    SPECIALCARDS = ["J"] # Only jack for real games
-    ALLCARDS = [str(num) for num in range (2, 11)] + SPECIALCARDS
+    SPECIALCARDS = {
+        "J" : "11",
+        # "Q" : 12,
+        # "K" : 13,
+        # "A" : 15,
+    }
+    ALLCARDS = [str(num) for num in range (2, 11)] + list(SPECIALCARDS)
     avaliableCards = ALLCARDS.copy()
 
     # Avaliable trump cards
@@ -49,10 +53,10 @@ class cards:
             if card not in cards.SPECIALCARDS:
                 intDeck.append(int(card))
             else:
-                if card == "J": intDeck.append(11)
-                elif card == "Q": intDeck.append(12)
-                elif card == "K": intDeck.append(13)
-                elif card == "A": intDeck.append(15)
+                if card == "J": intDeck.append(int(cards.SPECIALCARDS["J"]))
+                elif card == "Q": intDeck.append(int(cards.SPECIALCARDS["Q"]))
+                elif card == "K": intDeck.append(int(cards.SPECIALCARDS["K"]))
+                elif card == "A": intDeck.append(int(cards.SPECIALCARDS["A"]))
 
         return sum(intDeck)
 
@@ -94,9 +98,51 @@ class cards:
                     p.drawTrump()
                     p.drawTrump()
             if card == "reincarnation":
-                pass
+                if target is not None and target.activeTrumps:
+                    target.activeTrumps.pop()
+                Game.currentBet += 1
 
-        elif category == "Deck": pass
+        elif category == "Deck":
+
+            if card == "hush":
+                pass
+            elif card == "perfectDraw":
+                ideal = Game.currentGoal
+                current = self.getPlayerTotal()
+                difference = ideal - current
+
+                avaliableCards = [cards.SPECIALCARDS[card] if card in cards.SPECIALCARDS else card for card in cards.avaliableCards]
+                validCards = [int(card) for card in avaliableCards if int(card) <= difference]
+                highestCard = str(max(validCards, default=None))
+                
+                reversedCards = {str(value): key for key, value in cards.SPECIALCARDS.items()}
+                cardToAdd = reversedCards.get(highestCard, highestCard)
+                
+                self.drawCard(cardToAdd)
+            
+
+            elif card == "refresh":
+                for c in range(0, len(self.deck)):
+                    toReturn = self.deck.pop()
+                    cards.avaliableCards.append(toReturn)
+                self.drawCard()
+                self.drawCard() 
+                
+            elif card == "remove":
+                if len(target.deck) > 1:
+                    toReturn = target.deck.pop()
+                    cards.avaliableCards.append(toReturn)
+            elif card == "return":
+                if len(self.deck) > 1:
+                    toReturn = self.deck.pop()
+                    cards.avaliableCards.append(toReturn)
+            elif card == "exchange":
+                player1Card, player2Card = self.deck.pop(), target.deck.pop()
+                self.deck.append(player2Card)
+                target.deck.append(player1Card)
+            elif card == "disservice":
+                target.drawCard()
+
         
         
 
@@ -136,26 +182,17 @@ def gameloop(Players):
         
     
     # Startup assignment
-    game = Game()
+    g = Game()
     Game.player = [cards() for _ in range(Players)]
 
     # player[0].playTrump(player[0].trumps[0])
-
-    print(game.currentGoal)
-    print(Game.player[0].trumps)
-    print(Game.player[0].activeTrumps)
-    Game.player[0].playTrump({'Go for': '24'})
-    print(game.currentGoal)
-    print(Game.player[0].trumps)
-    print(Game.player[0].activeTrumps)
-    Game.player[0].playTrump({'Token': 'destroy'}, Game.player[0])
-    print(Game.player[0].activeTrumps)
-
-
-
-
-
-
+    print(Game.player[0].deck)
+    print(Game.player[1].deck)
+    print(Game.player[0].getPlayerTotal())
+    Game.player[0].playTrump({'Deck': 'perfectDraw'})
+    print(Game.player[0].getPlayerTotal())
+    print(Game.player[0].deck)
+    print(Game.player[1].deck)
 
 
 
