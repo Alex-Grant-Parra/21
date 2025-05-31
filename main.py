@@ -56,31 +56,55 @@ class cards:
 
         return sum(intDeck)
 
-    def playTrump(self, voidTrump):
+    def playTrump(self, voidTrump, target = None):
 
         # Converts to dictionary if not already
         if str(type(voidTrump)) != "<class 'dict'>": trump = eval(voidTrump)
         else: trump = voidTrump
 
         # Checks if the trump card is really in the player's hand
-        if trump not in self.trumps:
-            raise ValueError(f"{trump} is not in the player's hand, but was attempted to be played.")
-            return
+        ensureTrumpInHand = False # Debug only
+        if ensureTrumpInHand:
+            if trump not in self.trumps:
+                raise ValueError(f"{trump} is not in the player's hand, but was attempted to be played.")
+                return
             
         # Trump card logic
         category = list(trump.keys()).pop()
         card = trump[category]
         
         if category == "Draw": self.drawCard(card)
+
         elif category == "Go for": Game.currentGoal = int(card)
-        elif category == "Bet": pass
-        elif category == "Token": pass
+
+        elif category == "Bet":
+            Game.currentBet =+ int(card)
+            if Game.currentBet > 0:
+                Game.currentBet = 0
+
+        elif category == "Token":
+
+            if card == "bless":
+                pass
+            if card == "destroy":
+                if target is not None and target.activeTrumps:
+                    target.activeTrumps.pop()
+            if card == "friendship":
+                for p in Game.player:
+                    p.drawTrump()
+                    p.drawTrump()
+            if card == "reincarnation":
+                pass
+
         elif category == "Deck": pass
         
-        self.trumps.remove(trump)
-
-
         
+
+        if category in ["Go for", "Bet"] or card == "bless":
+            self.activeTrumps.append(trump)
+
+        if ensureTrumpInHand:
+            self.trumps.remove(trump) 
 
         
         
@@ -88,7 +112,7 @@ class cards:
 
 
     def __init__(self):
-        self.deck, self.trumps = [], []
+        self.deck, self.trumps, self.activeTrumps = [], [], []
 
         # Deals starting items out to each player
         self.drawCard()
@@ -101,6 +125,7 @@ class Game:
     
     currentBet = 1
     currentGoal = 21
+    player = []
 
 def gameloop(Players):
 
@@ -112,16 +137,19 @@ def gameloop(Players):
     
     # Startup assignment
     game = Game()
-    player = [cards() for _ in range(Players)]
+    Game.player = [cards() for _ in range(Players)]
 
     # player[0].playTrump(player[0].trumps[0])
 
     print(game.currentGoal)
-    print(player[0].trumps)
-    player[0].playTrump(player[0].trumps[0])
-    
+    print(Game.player[0].trumps)
+    print(Game.player[0].activeTrumps)
+    Game.player[0].playTrump({'Go for': '24'})
     print(game.currentGoal)
-    print(player[0].trumps)
+    print(Game.player[0].trumps)
+    print(Game.player[0].activeTrumps)
+    Game.player[0].playTrump({'Token': 'destroy'}, Game.player[0])
+    print(Game.player[0].activeTrumps)
 
 
 
