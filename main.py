@@ -34,31 +34,52 @@ class cards:
         card = choice(cards.ALLTRUMPS[category])
         return {category : card}
     
-    def drawCard(self, card = 0):
-        if card == 0:
-            self.deck.append(cards.randomCard())
+    def drawCard(self, Hidden=False, card=None):
+        if card is None:
+            new_card = cards.randomCard()
         else:
             if card in cards.avaliableCards:
-                self.deck.append(card)
+                new_card = card
                 cards.avaliableCards.remove(str(card))
             else:
-                return -1
+                return None
+
+        self.deck.append(new_card)
+        self.hiddenOrder.append(Hidden)  # This ensures order stays consistent
+
+        # Ensure lengths always match
+        while len(self.hiddenOrder) > len(self.deck):
+            self.hiddenOrder.pop()
+
+
 
     def drawTrump(self):
         self.trumps.append(cards.randomTrump())
 
-    def getPlayerTotal(self):
+    def getTotalPlayerTotal(self):
         intDeck = []
         for card in self.deck:
             if card not in cards.SPECIALCARDS:
                 intDeck.append(int(card))
             else:
-                if card == "J": intDeck.append(int(cards.SPECIALCARDS["J"]))
-                elif card == "Q": intDeck.append(int(cards.SPECIALCARDS["Q"]))
-                elif card == "K": intDeck.append(int(cards.SPECIALCARDS["K"]))
-                elif card == "A": intDeck.append(int(cards.SPECIALCARDS["A"]))
+                if card in cards.SPECIALCARDS:
+                    intDeck.append(int(cards.SPECIALCARDS[card]))
+
 
         return sum(intDeck)
+
+    def getVisiblePlayerTotal(player):
+        intDeck = []
+        for card in player.deck:
+            if card not in cards.SPECIALCARDS:
+                intDeck.append(int(card))
+            else:
+                if card in cards.SPECIALCARDS:
+                    intDeck.append(int(cards.SPECIALCARDS[card]))
+        
+        hiddenOrder = player.hiddenOrder
+
+        return sum(card for card, hidden in zip(intDeck, hiddenOrder) if not hidden)
 
     def playTrump(self, voidTrump, target = None):
 
@@ -89,46 +110,49 @@ class cards:
                 if list(removed.keys())[0] == "Go for":
                     pass # Make it look at the last go for in the active trumps
                 if category == "Bet":  # If it's a bet-related trump
-                    Game.currentBet -= int(card)
+                    if card == "bloodshed":
+                        Game.currentBet += 1
+                    else:
+                        Game.currentBet -= int(card)
                 elif list(removed.values())[0] == "bless":
                     pass # Nothing needs to happen, as bless is only counted when a person is knocked out.
 
-        if category == "Draw": self.drawCard(card)
+        if category == "Draw": self.drawCard(card = card)
 
         elif category == "Go for": Game.currentGoal = int(card)
 
-        elif category == "Bet": # Add bloodshed
+        elif category == "Bet":
+
             if card == "bloodshed":
-                self.drawTrump()
-                Game.currentBet += 1
+                self.drawTrump
+                Game.currentBet -= 1
             else:
                 Game.currentBet = Game.currentBet + int(card)
                 if Game.currentBet < 0:
-                    Game.hiddenBet = Game.currentBet
                     Game.currentBet = 0
 
         elif category == "Token":
 
             if card == "bless":
                 pass
+
             if card == "destroy":
                 destroy()
-
-
 
             if card == "friendship":
                 for p in Game.player:
                     p.drawTrump()
                     p.drawTrump()
+
             if card == "reincarnation":
-                if target is not None and target.activeTrumps:
-                    target.activeTrumps.pop()
-                Game.currentBet += 1
+                destroy()
+                self.drawTrump()
 
         elif category == "Deck":
 
             if card == "hush":
-                pass
+                self.drawCard(Hidden = True)
+
             elif card == "perfectDraw":
                 ideal = Game.currentGoal
                 current = self.getPlayerTotal()
@@ -143,7 +167,6 @@ class cards:
                 
                 self.drawCard(cardToAdd)
             
-
             elif card == "refresh":
                 for c in range(0, len(self.deck)):
                     toReturn = self.deck.pop()
@@ -155,14 +178,17 @@ class cards:
                 if len(target.deck) > 1:
                     toReturn = target.deck.pop()
                     cards.avaliableCards.append(toReturn)
+
             elif card == "return":
                 if len(self.deck) > 1:
                     toReturn = self.deck.pop()
                     cards.avaliableCards.append(toReturn)
+
             elif card == "exchange":
                 player1Card, player2Card = self.deck.pop(), target.deck.pop()
                 self.deck.append(player2Card)
                 target.deck.append(player1Card)
+
             elif card == "disservice":
                 target.drawCard()
 
@@ -175,13 +201,18 @@ class cards:
         if ensureTrumpInHand:
             self.trumps.remove(trump) 
 
-        
-        
+    def getPlayerDeck(player):
+        # Hides the areas that are suppost to be hidden before showing
+        HIDDENIDENTIFIER = "XXX"
 
+        deck = player.deck
+        hiddenOrder = player.hiddenOrder
+        return [HIDDENIDENTIFIER if hidden else card for card, hidden in zip(deck, hiddenOrder)]
 
 
     def __init__(self):
         self.deck, self.trumps, self.activeTrumps = [], [], []
+        self.hiddenOrder = [True, False]
 
         # Deals starting items out to each player
         self.drawCard()
@@ -189,16 +220,12 @@ class cards:
         self.drawTrump()
         self.drawTrump()
 
-    
 class Game:
     
     currentBet = 1
     currentGoal = 21
-    hiddenBet = currentBet
     player = []
 
-    def setBet(bet):
-        Game.currentBet, Game.hiddenBet = bet, bet
 def gameloop(Players):
 
     # Check the game has the correct number of players
@@ -210,15 +237,14 @@ def gameloop(Players):
     # Startup assignment
     g = Game()
     Game.player = [cards() for _ in range(Players)]
-    Game.currentBet = 5
 
-    Game.setBet(5)
-    print(Game.currentBet)
-    Game.player[0].playTrump({"Bet" : "-2"})
-    Game.player[0].playTrump({"Bet" : "-1"})
-    print(Game.currentBet)
-    Game.player[1].playTrump({"Token" : "destroy"}, Game.player[0])
-    print(Game.currentBet)
+
+    Game.player[0].playTrump({"Deck" : "hush"})
+    Game.player[0].drawCard()
+    print(cards.getPlayerDeck(Game.player[0]))
+    print(Game.player[0].hiddenOrder)
+    print(cards.getVisiblePlayerTotal(Game.player[0]))
+    
 
 
 
