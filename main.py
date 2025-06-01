@@ -80,6 +80,9 @@ class Player:
                 intDeck.append(int(CardManager.SPECIALCARDS[card]))
         return sum(intDeck)
 
+
+
+
     def getVisiblePlayerTotal(self):
         intDeck = []
         for card in self.deck:
@@ -96,16 +99,20 @@ class Player:
         HIDDENIDENTIFIER = "XXX"
         return [HIDDENIDENTIFIER if hidden else card for card, hidden in zip(self.deck, self.hiddenOrder)]
 
+
+
+
+
     def playTrump(self, voidTrump, target=None):
 
         # Converts to dictionary if not already
         if str(type(voidTrump)) != "<class 'dict'>":
-            trump = literal_eval()(voidTrump)
+            trump = literal_eval(voidTrump)
         else:
             trump = voidTrump
 
         # Checks if the trump card is really in the player's hand
-        ensureTrumpInHand = True  # Debug only
+        ensureTrumpInHand = False  # Debug only
         if ensureTrumpInHand:
             if trump not in self.trumps:
                 raise ValueError(f"{trump} is not in the player's hand, but was attempted to be played.")
@@ -211,17 +218,64 @@ class Game:
     currentBet = 1
     currentGoal = 21
     players = []
+    currentPlayer = None
 
     @staticmethod
-    def gameLoop(playerCount):
-        if playerCount < 2:
+    def nextTurn(): # When called after first, will increment player control
+        try:
+            Game.currentPlayer = next(Game.__playerIterator)
+        except StopIteration:
+            # Restarts from beginning, looping
+            Game.__playerIterator = iter(Game.players)
+            Game.currentPlayer = next(Game.__playerIterator)
+
+
+    
+
+    @staticmethod
+    def gameLoop(playerConfig):
+        # Initialisation
+
+        totalPlayers = sum(playerConfig.values())
+
+        if totalPlayers < 2:
             raise ValueError("Too few players to start the game! (2 <= Players <= 13)")
-        elif playerCount > 13:
+        elif totalPlayers > 13:
             raise ValueError("Too many players to start the game! (2 <= Players <= 13)")
 
-        Game.players = [LocalHumanPlayer() for _ in range(playerCount)]
+        #Creating players
+
+        # Clear any existing players
+        Game.players = []
+        # Map strings to classes for dynamic instantiation
+        playerTypeMap = {
+            "AIPlayer" : AIPlayer,
+            "RemoteHumanPlayer" : RemoteHumanPlayer,
+            "LocalHumanPlayer" : LocalHumanPlayer
+        }
+
+        for playerTypeName, count in playerConfig.items():
+            playerClass = playerTypeMap.get(playerTypeName)
+            if not playerClass:
+                raise ValueError(f"Unknown player type: {playerTypeName}")
+            for _ in range(count):
+                Game.players.append(playerClass())
 
 
+        # Other setup:
+
+        Game.__playerIterator = iter(Game.players)
+        Game.nextTurn() # Sets first player
+        
+        print(Game.players[0].deck)
+        print(Game.players[1].deck)
+        Game.players[0].playTrump({"Deck" : "disservice"}, Game.players[1])
+        print(Game.players[0].deck)
+        print(Game.players[1].deck)
+
+
+
+        
         
 
 
@@ -238,4 +292,7 @@ class AIPlayer(Player):
 
 
 # Start game with 2 players
-Game.gameLoop(2)
+Game.gameLoop({
+    "LocalHumanPlayer": 1,
+    "AIPlayer": 1
+})
