@@ -1,0 +1,11 @@
+| Name                                            | Signature                                               | Description                                                      | Internal or External |
+| ----------------------------------------------- | ------------------------------------------------------- | ---------------------------------------------------------------- | -------------------- |
+| `getDeckInternal(player)`                       | `(player: Player) -> list[str]`                         | Full deck with all cards visible (for the player themself)       | Internal             |
+| `getDeckExternal(player)`                       | `(player: Player) -> list[str]`                         | Deck with hidden cards masked as "XXX" (for other players)       | External             |
+| `getTrumpsInternal(player)`                     | `(player: Player) -> list[dict]`                        | List of trump cards the player currently holds                   | Internal             |
+| `getActiveTrumps(player)`                       | `(player: Player) -> list[dict]`                        | List of currently active trump cards                             | Internal & External  |
+| `getPlayerTotalInternal(player)`                | `(player: Player) -> int`                               | Total sum of all cards (full internal info)                      | Internal             |
+| `getPlayerTotalExternal(player)`                | `(player: Player) -> int`                               | Sum of only visible cards in the deck (external view)            | External             |
+| `drawCard(player)`                              | `(player: Player) -> None`                              | Add a card to the player’s deck (any player can draw)            | Internal & External  |
+| `drawTrump(player)`                             | `(player: Player) -> None`                              | Add a trump card to player’s hand                                | Internal & External  |
+| `playTrumpCard(player, trumpName, target=None)` | `(player: Player, trumpName: str, target=None) -> None` | Play a trump card from hand, optionally targeting another player | Internal & External  |

@@ -230,6 +230,35 @@ class Game:
             Game.currentPlayer = next(Game.__playerIterator)
 
 
+    @staticmethod
+    def playTrumpCard(playerObj, trumpCardName, target=None):
+        
+        # Allows a player to play a trump card.
+
+        # Args:
+        #     playerObj (Player): The player playing the trump card.
+        #     trumpCardName (str): The name of the trump card to play.
+        #     target (Player, optional): Target player, if the card requires it.
+
+        # Raises:
+        #     ValueError: If the trump card is not in the player's hand.
+        
+        # Find matching trump in player's hand
+        matchingTrump = None
+        for trump in playerObj.trumps:
+            category = list(trump.keys())[0]
+            card = trump[category]
+            if card == trumpCardName:
+                matchingTrump = trump
+                break
+
+        if not matchingTrump:
+            raise ValueError(f"Trump card '{trumpCardName}' not found in player's hand.")
+
+        playerObj.playTrump(matchingTrump, target)
+        playerObj.trumps.remove(matchingTrump)
+
+
     
 
     @staticmethod
