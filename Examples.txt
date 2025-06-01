@@ -9,3 +9,35 @@
 | `drawCard(player)`                              | `(player: Player) -> None`                              | Add a card to the player’s deck (any player can draw)            | Internal & External  |
 | `drawTrump(player)`                             | `(player: Player) -> None`                              | Add a trump card to player’s hand                                | Internal & External  |
 | `playTrumpCard(player, trumpName, target=None)` | `(player: Player, trumpName: str, target=None) -> None` | Play a trump card from hand, optionally targeting another player | Internal & External  |
+
+Examples of trump cards you can call:
+
+Game.playTrumpCard(player, "2")
+Game.playTrumpCard(player, "3")
+Game.playTrumpCard(player, "4")
+Game.playTrumpCard(player, "5")
+Game.playTrumpCard(player, "6")
+Game.playTrumpCard(player, "7")
+
+Game.playTrumpCard(player, "17")
+Game.playTrumpCard(player, "24")
+Game.playTrumpCard(player, "27")
+
+Game.playTrumpCard(player, "+1")
+Game.playTrumpCard(player, "+2")
+Game.playTrumpCard(player, "-1")
+Game.playTrumpCard(player, "-2")
+Game.playTrumpCard(player, "bloodshed")
+
+Game.playTrumpCard(player, "bless")
+Game.playTrumpCard(player, "destroy", target)
+Game.playTrumpCard(player, "friendship")
+Game.playTrumpCard(player, "reincarnation", target)
+
+Game.playTrumpCard(player, "hush")
+Game.playTrumpCard(player, "perfectDraw")
+Game.playTrumpCard(player, "refresh")
+Game.playTrumpCard(player, "remove", target)
+Game.playTrumpCard(player, "return")
+Game.playTrumpCard(player, "exchange", target)
+Game.playTrumpCard(player, "disservice", target)
